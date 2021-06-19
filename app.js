@@ -16,6 +16,10 @@ app.use(
 );
 //
 app.use(flash());
+app.use(function (req, res, next) {
+  res.locals.user = req.session.user;
+  next();
+});
 
 const router = require("./router");
 
