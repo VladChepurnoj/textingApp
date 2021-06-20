@@ -1,8 +1,10 @@
 const postsCollection = require("../db").db().collection("posts");
+const ObjectID = require("mongodb").ObjectID;
 
-let Post = function (data) {
+let Post = function (data, userid) {
   this.data = data;
   this.errors = [];
+  this.userid = userid;
 };
 
 Post.prototype.cleanUp = function () {
@@ -17,6 +19,7 @@ Post.prototype.cleanUp = function () {
     title: this.data.title.trim(),
     body: this.data.body.trim(),
     createdDate: new Date(),
+    author: ObjectID(this.userid),
   };
 };
 
@@ -46,6 +49,43 @@ Post.prototype.create = function () {
         });
     } else {
       reject(this.errors);
+    }
+  });
+};
+
+Post.findSingleById = function (id) {
+  return new Promise(async function (resolve, reject) {
+    if (typeof id != "string" || !ObjectID.isValid(id)) {
+      reject();
+      return;
+    }
+
+    let posts = await postsCollection
+      .aggregate([
+        { $match: { _id: new ObjectID(id) } },
+        {
+          $lookup: {
+            from: "users",
+            localField: "author",
+            foreignField: "_id",
+            as: "authorDocument",
+          },
+        },
+        {
+          $project: {
+            title: 1,
+            body: 1,
+            createdDate: 1,
+            author: { $arrayElemAt: ["$authorDocument", 0] },
+          },
+        },
+      ])
+      .toArray();
+    if (posts.length) {
+      console.log(posts[0]);
+      resolve(posts[0]);
+    } else {
+      reject();
     }
   });
 };
