@@ -89,7 +89,7 @@ exports.profilePostsScreen = function (req, res) {
     .then(function (posts) {
       res.render("profile", {
         posts: posts,
-        profileUsername:    req.profileUser.username,
+        profileUsername: req.profileUser.username,
         profileAvatar: req.profileUser.avatar,
       });
     })
